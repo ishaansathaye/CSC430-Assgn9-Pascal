@@ -27,6 +27,8 @@ type
       args: RealList;
    public
       constructor Create(i: ExprC; a: RealList);
+    function getId() : ExprC;
+    function getArgs() : RealList;
 end;
 
 type
@@ -155,6 +157,16 @@ begin
    args := a;
 end;
 
+function AppC.getId() : ExprC;
+begin
+   getId := id;
+end;
+
+function AppC.getArgs() : RealList;
+begin
+   getArgs := args;
+end;
+
 constructor IdC.Create(i: string);
 begin
    id := i;
@@ -277,23 +289,62 @@ begin
    end;
 end;
 
-function interp(e: ExprC; env: env): Value;
+function interp(e: ExprC; env: Env): Value;
+var
+  id: ExprC;
+  args: RealList;
 begin
-    if e is NumC then
-        Result := NumV.Create(NumC(e).getVal())
-    else if e is StringC then
-        Result := StringV.Create(StringC(e).getString())
-    else if e is AppC then
-        WriteLn('AppC Case')
-    else if e is LamC then
-        WriteLn('LamC Case')
-    else if e is IfC then
-        WriteLn('IfC Case')
-    else if e is IdC then
-        Result := env.lookup(IdC(e).getId())
+  if e is NumC then
+    Result := NumV.Create(NumC(e).getVal())
+  else if e is StringC then
+    Result := StringV.Create(StringC(e).getString())
+  else if e is AppC then
+  begin
+    id := AppC(e).getId();
+    args := AppC(e).getArgs();
+    if id is IdC then
+    begin
+      if IdC(id).getId() = 'error' then
+        raise Exception.Create('error')
+      else if IdC(id).getId() = '+' then
+        Result := NumV.Create(args[0] + args[1])
+      else if IdC(id).getId() = '-' then
+        Result := NumV.Create(args[0] - args[1])
+      else if IdC(id).getId() = '*' then
+        Result := NumV.Create(args[0] * args[1])
+      else if IdC(id).getId() = '/' then
+        begin
+            if args[1] = 0 then
+                raise Exception.Create('error')
+            else
+                Result := NumV.Create(args[0] / args[1])
+            end
+      else if IdC(id).getId() = '<=' then
+        if args[0] <= args[1] then
+          Result := BoolV.Create(True)
+        else
+          Result := BoolV.Create(False)
+      else if IdC(id).getId() = 'equal?' then
+        if args[0] = args[1] then
+          Result := BoolV.Create(True)
+        else
+          Result := BoolV.Create(False)
+      else
+        raise Exception.Create('error')
+    end
     else
-        WriteLn('Error')
+      raise Exception.Create('error')
+  end
+  else if e is LamC then
+    WriteLn('LamC Case')
+  else if e is IfC then
+    WriteLn('IfC Case')
+  else if e is IdC then
+    Result := env.lookup(IdC(e).getId())
+  else
+    WriteLn('Error');
 end;
+
 
 function serialize(v: Value): Real;
 begin
@@ -352,7 +403,7 @@ var
     stringy: StringC;
     topEnv : Env;
     id1 : IdC;
-    
+    expression : AppC;
 begin
     num := NumC.Create(5);
     if topinterp(num) = 1 then
@@ -382,4 +433,54 @@ begin
     id1 := IdC.Create('+');
     if topinterp(id1) = 1 then
         raise Exception.Create('uh oh 3');
+
+    WriteLn('+ 5 6 = ');
+    expression := AppC.Create(id1, RealList.Create(5, 6));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 4');
+
+    WriteLn('- 5 6 = ');
+    expression := AppC.Create(IdC.Create('-'), RealList.Create(5, 6));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 5');
+
+    WriteLn('* 5 6 = ');
+    expression := AppC.Create(IdC.Create('*'), RealList.Create(5, 6));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 6');
+    
+    WriteLn('/ 5 6 = ');
+    expression := AppC.Create(IdC.Create('/'), RealList.Create(5, 6));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 7');
+
+    WriteLn('/ 5 0 = ');
+    expression := AppC.Create(IdC.Create('/'), RealList.Create(5, 0));
+    try
+        if topinterp(expression) = 1 then
+            raise Exception.Create('uh oh 8');
+    except
+        on E: Exception do
+            WriteLn('Caught exception: ', E.ClassName, ': ', E.Message);
+    end;
+
+    WriteLn('<= 5 6 = ');
+    expression := AppC.Create(IdC.Create('<='), RealList.Create(5, 6));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 9');
+
+    WriteLn('<= 6 5 = ');
+    expression := AppC.Create(IdC.Create('<='), RealList.Create(6, 5));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 10');
+
+    WriteLn('equal? 5 6 = ');
+    expression := AppC.Create(IdC.Create('equal?'), RealList.Create(5, 6));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 11');
+
+    WriteLn('equal? 5 5 = ');
+    expression := AppC.Create(IdC.Create('equal?'), RealList.Create(5, 5));
+    if topinterp(expression) = 1 then
+        raise Exception.Create('uh oh 12');
 end.
