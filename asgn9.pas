@@ -101,6 +101,7 @@ type
       bool: Boolean;
    public
       constructor Create(b: Boolean);
+      function getBool() : Boolean;
 end;
 
 type
@@ -202,6 +203,11 @@ begin
    bool := b;
 end;
 
+function BoolV.getBool() : Boolean;
+begin
+   getBool := bool;
+end;
+
 constructor CloV.Create(a: RealList; b: ExprC; e: Env);
 begin
    args := a;
@@ -243,6 +249,21 @@ begin
     else if v is StringV then
         begin
             WriteLn(StringV(v).getStr());
+            Result := 0;
+        end
+    else if v is BoolV then
+        begin
+            WriteLn(BoolV(v).getBool());
+            Result := 0;
+        end
+    else if v is CloV then
+        begin
+            WriteLn('<procedure>');
+            Result := 0;
+        end
+    else if v is PrimV then
+        begin
+            WriteLn('<primop>');
             Result := 0;
         end
     else
