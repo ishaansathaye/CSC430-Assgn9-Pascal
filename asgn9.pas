@@ -35,6 +35,7 @@ type
       id: string;
    public
       constructor Create(i: string);
+      function getId() : string;
 end;
 
 type
@@ -74,6 +75,8 @@ type
       value: Value;
    public
       constructor Create(n: string; v: Value);
+      function getName() : string;
+      function getValy() : Value;
 end;
 
 BindArray = array of Bind;
@@ -84,6 +87,7 @@ type
       bindings: array of Bind;
    public
       constructor Create(b: BindArray);
+      function lookup(symbol : string) : Value;
 end;
 
 type
@@ -121,6 +125,8 @@ type
       args: Real;
    public
       constructor Create(o: string; a: Real);
+      function getOp() : string;
+      function getArgs() : Real;
 end;
 
 type
@@ -154,6 +160,11 @@ begin
    id := i;
 end;
 
+function IdC.getId() : string;
+begin
+   getId := id;
+end;
+
 constructor IfC.Create(tt, tV, eV: ExprC);
 begin
    test := tt;
@@ -181,6 +192,16 @@ constructor Bind.Create(n: string; v: Value);
 begin
    name := n;
    value := v;
+end;
+
+function Bind.getName() : string;
+begin
+    getName := name;
+end;
+
+function Bind.getValy() : Value;
+begin
+    getValy := value;
 end;
 
 constructor Env.Create(b: BindArray);
@@ -221,6 +242,16 @@ begin
    args := a;
 end;
 
+function PrimV.getArgs() : Real;
+begin
+   getArgs := args;
+end;
+
+function PrimV.getOp() : string;
+begin
+   getOp := op;
+end;
+
 constructor StringV.Create(s: string);
 begin
    str := s;
@@ -229,6 +260,21 @@ end;
 function StringV.getStr() : string;
 begin
    getStr := str;
+end;
+
+function Env.lookup(symbol: string) : Value;
+var
+   i: Integer;
+begin
+   Result := nil;
+   for i := 0 to Length(bindings) - 1 do
+   begin
+      if bindings[i].getName = symbol then
+      begin
+         Result := bindings[i].getValy;
+         Exit;
+      end;
+   end;
 end;
 
 function interp(e: ExprC; env: env): Value;
@@ -244,7 +290,7 @@ begin
     else if e is IfC then
         WriteLn('IfC Case')
     else if e is IdC then
-        WriteLn('IdC Case')
+        Result := env.lookup(IdC(e).getId())
     else
         WriteLn('Error')
 end;
@@ -304,6 +350,9 @@ end;
 var
     num: NumC;
     stringy: StringC;
+    topEnv : Env;
+    id1 : IdC;
+    
 begin
     num := NumC.Create(5);
     if topinterp(num) = 1 then
@@ -312,4 +361,25 @@ begin
     stringy := StringC.Create('aaaah');
     if topinterp(stringy) = 1 then
         raise Exception.Create('uh oh 2');
+    
+    topEnv := Env.Create(
+        BindArray.Create(
+        Bind.Create('true', BoolV.Create(True)),
+        Bind.Create('false', BoolV.Create(False)),
+        Bind.Create('+', PrimV.Create('+', 2)),
+        Bind.Create('-', PrimV.Create('-', 2)),
+        Bind.Create('*', PrimV.Create('*', 2)),
+        Bind.Create('/', PrimV.Create('/', 2)),
+        Bind.Create('<=', PrimV.Create('<=', 2)),
+        Bind.Create('equal?', PrimV.Create('equal?', 2)),
+        Bind.Create('error', PrimV.Create('error', 1))
+        )
+    );
+    
+    WriteLn('+ = ', PrimV(topEnv.lookup('+')).getOp());
+    WriteLn(' ', PrimV(topEnv.lookup('+')).getArgs());
+    
+    id1 := IdC.Create('+');
+    if topinterp(id1) = 1 then
+        raise Exception.Create('uh oh 3');
 end.
