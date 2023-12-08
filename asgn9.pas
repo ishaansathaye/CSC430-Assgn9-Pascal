@@ -233,20 +233,39 @@ begin
         Result := StringV.Create(StringC(e).getString());
 end;
 
+function serialize(v: Value): Real;
+begin
+    if v is NumV then
+        begin
+            WriteLn(NumV(v).getValue());
+            Result := 0;
+        end
+    else if v is StringV then
+        begin
+            WriteLn(StringV(v).getStr());
+            Result := 0;
+        end
+    else
+        Result := -1;
+end;
+
+function topinterp(e: ExprC): Real;
+begin
+    serialize(interp(e));
+    Result := 0;
+end;
 
 var
     num: NumC;
-    num2: Value;
     stringy: StringC;
-    stringy2: Value;
 
 begin
     num := NumC.Create(5);
-    num2 := interp(num);
-    WriteLn('Num = ', NumV(num2).getValue());
+    if topinterp(num) = 1 then
+        raise Exception.Create('uh oh');
     
     stringy := StringC.Create('aaaah');
-    stringy2 := interp(stringy);
-    WriteLn('Stringy = ', StringV(stringy2).getStr());
+    if topinterp(stringy) = 1 then
+        raise Exception.Create('uh oh 2');
 end.
 
