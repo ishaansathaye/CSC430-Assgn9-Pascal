@@ -231,12 +231,22 @@ begin
    getStr := str;
 end;
 
-function interp(e: ExprC): Value;
+function interp(e: ExprC; env: env): Value;
 begin
     if e is NumC then
         Result := NumV.Create(NumC(e).getVal())
     else if e is StringC then
-        Result := StringV.Create(StringC(e).getString());
+        Result := StringV.Create(StringC(e).getString())
+    else if e is AppC then
+        WriteLn('AppC Case')
+    else if e is LamC then
+        WriteLn('LamC Case')
+    else if e is IfC then
+        WriteLn('IfC Case')
+    else if e is IdC then
+        WriteLn('IdC Case')
+    else
+        WriteLn('Error')
 end;
 
 function serialize(v: Value): Real;
@@ -271,15 +281,29 @@ begin
 end;
 
 function topinterp(e: ExprC): Real;
+var
+    topEnv: Env;
 begin
-    serialize(interp(e));
+    topEnv := Env.Create(
+        BindArray.Create(
+        Bind.Create('true', BoolV.Create(True)),
+        Bind.Create('false', BoolV.Create(False)),
+        Bind.Create('+', PrimV.Create('+', 2)),
+        Bind.Create('-', PrimV.Create('-', 2)),
+        Bind.Create('*', PrimV.Create('*', 2)),
+        Bind.Create('/', PrimV.Create('/', 2)),
+        Bind.Create('<=', PrimV.Create('<=', 2)),
+        Bind.Create('equal?', PrimV.Create('equal?', 2)),
+        Bind.Create('error', PrimV.Create('error', 1))
+        )
+    );
+    serialize(interp(e, topEnv));
     Result := 0;
 end;
 
 var
     num: NumC;
     stringy: StringC;
-
 begin
     num := NumC.Create(5);
     if topinterp(num) = 1 then
@@ -289,4 +313,3 @@ begin
     if topinterp(stringy) = 1 then
         raise Exception.Create('uh oh 2');
 end.
-
