@@ -60,6 +60,7 @@ type
       str: string;
    public
       constructor Create(s: string);
+      function getString() : string;
 end;
 
 type
@@ -91,6 +92,7 @@ type
       value: Real;
    public
       constructor Create(n: Real);
+      function getValue() : Real;
 end;
 
 type
@@ -126,6 +128,7 @@ type
       str: string;
    public
       constructor Create(s: string);
+      function getStr() : string;
 end;
 
 { Constructors }
@@ -168,6 +171,11 @@ begin
    str := s;
 end;
 
+function StringC.getString() : string;
+begin
+   getString := str;
+end;
+
 constructor Bind.Create(n: string; v: Value);
 begin
    name := n;
@@ -182,6 +190,11 @@ end;
 constructor NumV.Create(n: Real);
 begin
    value := n;
+end;
+
+function NumV.getValue() : Real;
+begin
+   getValue := value;
 end;
 
 constructor BoolV.Create(b: Boolean);
@@ -207,22 +220,33 @@ begin
    str := s;
 end;
 
+function StringV.getStr() : string;
+begin
+   getStr := str;
+end;
+
 function interp(e: ExprC): Value;
 begin
-    if TypeInfo(e) = TypeInfo(NumC) then
-        Result := NumV.Create(2)
-    else
-        Result := StringV.Create('hi');
+    if e is NumC then
+        Result := NumV.Create(NumC(e).getVal())
+    else if e is StringC then
+        Result := StringV.Create(StringC(e).getString());
 end;
 
 
 var
     num: NumC;
     num2: Value;
+    stringy: StringC;
+    stringy2: Value;
 
 begin
     num := NumC.Create(5);
     num2 := interp(num);
-    WriteLn('Num = ', num.getVal);
+    WriteLn('Num = ', NumV(num2).getValue());
+    
+    stringy := StringC.Create('aaaah');
+    stringy2 := interp(stringy);
+    WriteLn('Stringy = ', StringV(stringy2).getStr());
 end.
 
